@@ -1,10 +1,19 @@
 import bot from "../bot.js";
-
+import { Resend } from "resend";
+const resend = new Resend(process.env.EMAIL);
 try {
   await import("../handler.js");
-  handlerLoaded = true;
+  resend.emails.send({
+    to: "noakmanuelnwobodo@gmail.com",
+    from: "error@schooldrop.de",
+    text: "it worked",
+  });
 } catch (e) {
-  console.error("Handler load error:", e);
+  resend.emails.send({
+    to: "noakmanuelnwobodo@gmail.com",
+    from: "error@schooldrop.de",
+    text: `Handler load error:", ${e}`,
+  });
 }
 export default async function handler(req, res) {
   try {
@@ -14,10 +23,15 @@ export default async function handler(req, res) {
 
       await bot.processUpdate(update);
     }
-
     res.status(200).send("ok");
   } catch (err) {
-    res.status(200).send("ok");
+    resend.emails.send({
+      to: "noakmanuelnwobodo@gmail.com",
+      from: "error@schooldrop.de",
+      text: `webhook load error:", ${e}`,
+    });
+    console.error("Webhook error:", err); // this will show in Vercel logs
+    res.status(200).json({ error: err.message, stack: err.stack }); // temporary - remove after fixing
   }
 }
 export const config = {
