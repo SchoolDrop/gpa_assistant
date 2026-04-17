@@ -1,11 +1,11 @@
 import TelegramBot from "node-telegram-bot-api";
 import { callDb } from "./callDb.js";
 import { dataSaved, histories, historiesCalc } from "./schema.js";
-import dotenv from "dotenv"
+import dotenv from "dotenv";
 
 dotenv.config({
-  path:".env"
-})
+  path: ".env",
+});
 
 const bot = new TelegramBot(process.env.TEL_KEY, {
   polling: true,
@@ -43,7 +43,6 @@ bot.on("callback_query", async (query) => {
   const data = query.data;
   const messageId = query.message.chat.id;
   let user = gpaData[messageId];
-  
 
   try {
     await callDb();
@@ -52,64 +51,76 @@ bot.on("callback_query", async (query) => {
         gpaData[messageId] = {
           step: "gpa_clicked",
           totalCreditUnit: 0,
-          userCreditUnit: 0,
+          userTotalPoints: 0,
           value: 0,
           type: "gpa",
           user: "",
+          total: 0,
+          totalLabel: "course",
+          current: 0,
+          courses: [],
+          created_at: new Date()
         };
-        
 
-        
-          bot.sendMessage(
-            messageId,
-            "🎓 *GPA Calculator*\n\nSelect an option:",
-            {
-              parse_mode: "Markdown",
-              reply_markup: {
-                inline_keyboard: [
-                  [
-                    { text: "⚡ Short", callback_data: "method1_calc_gpa" },
-                    { text: "📘 Long", callback_data: "method2_calc_gpa" },
-                  ],
-                  [{ text: "📊 Records", callback_data: "view_calc_gpa" }],
-                ],
-              },
-            },
-          );
+        bot.sendMessage(messageId, "🎓 *GPA Calculator*\n\nSelect an option:", {
+          parse_mode: "Markdown",
+          reply_markup: {
+            inline_keyboard: [
+              [
+                { text: "⚡ Short", callback_data: "method1_calc_gpa" },
+                { text: "📘 Long", callback_data: "method2_calc_gpa" },
+              ],
+              [{ text: "📊 Records", callback_data: "view_calc_gpa" }],
+            ],
+          },
+        });
 
         break;
       case "cgpa":
         gpaData[messageId] = {
-          step: "num_semesters",
-          totalSemesters: 0,
+          step: "cgpa_clicked",
+          total: 0,
+          totalLabel: "semester",
           currentSemester: 0,
           semesters: [],
           value: 0,
           type: "cgpa",
           user: "",
+          created_at:new Date()
         };
+
+        bot.sendMessage(
+          messageId,
+          "🎓 *CGPA Calculator*\n\nSelect an option:",
+          {
+            parse_mode: "Markdown",
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  { text: "New CGPA", callback_data: "new_cgpa" },
+                  { text: "📊 Records", callback_data: "view_calc_cgpa" },
+                ],
+              ],
+            },
+          },
+        );
         await histories.create({
           user_id: messageId,
-          data_use: gpaData[messageId].type,
+          data_use: gpaData[messageId].step,
         });
-        bot.sendChatAction(messageId, "typing");
-        setTimeout(() => {
-          bot.sendMessage(
-            messageId,
-            "To calculate your CGPA, input how many semesters done",
-          );
-        }, 1200);
 
         break;
       case "plan_gpa":
         gpaData[messageId] = {
           step: "plan_gpa",
-          totalCourses: 0,
-          currentCourse: 0,
+          total: 0,
+          totalLabel: "course",
+          current: 0,
           courses: [],
           value: 0,
           type: "plan_gpa",
           user: "",
+          created_at:new Date()
         };
         await histories.create({
           user_id: messageId,
@@ -119,14 +130,20 @@ bot.on("callback_query", async (query) => {
         setTimeout(() => {
           bot.sendMessage(
             messageId,
-            "To plan your GPA, input the total semester's courses",
+            "Things to note. It calculate base on this format.For a 1 credit unit course, the highest point is 5, for a 2 credit unit course the highest point is 10. For a 3 credit unit course, the highest point is 15 and so on",
           );
-        }, 1200);
+        }, 1000);
+        bot.sendChatAction(messageId, "typing");
+        setTimeout(() => {
+          bot.sendMessage(
+            messageId,
+            "To plan your GPA, input the number of courses offering",
+          );
+        }, 2000);
 
         break;
       case "method1_calc_gpa":
         user.step = "total_credit_unit";
-        console.log("yues")
         bot.sendMessage(
           messageId,
           "Calculate GPA through the total credit unit",
@@ -134,21 +151,36 @@ bot.on("callback_query", async (query) => {
 
         await histories.create({
           user_id: messageId,
-          data_use: user.type,
+          data_use: "method1_calc_gpa",
         });
         bot.sendChatAction(messageId, "typing");
         setTimeout(() => {
           bot.sendMessage(
             messageId,
-            "Write down total point/gpa gotten for the semester",
+            "Write down total unit for the semester",
           );
         }, 1000);
+        break;
+      case "method2_calc_gpa":
+        user.step = "num_semesters";
+
+        await histories.create({
+          user_id: messageId,
+          data_use: "method2_calc_gpa",
+        });
+        bot.sendChatAction(messageId, "typing");
+        setTimeout(() => {
+          bot.sendMessage(
+            messageId,
+            "To calculate your GPA, input the number of courses",
+          );
+        }, 1200);
         break;
       case "view_calc_gpa":
         const res = await dataSaved.find(
           {
             user_id: messageId,
-            data_use:"gpa"
+            data_use: "gpa",
           },
           { data_name: 1, data: 1, _id: 0 },
         );
@@ -174,7 +206,7 @@ ${values}`,
         const cgpaRes = await dataSaved.find(
           {
             user_id: messageId,
-            data_use:"cgpa"
+            data_use: "cgpa",
           },
           { data_name: 1, data: 1, _id: 0 },
         );
@@ -196,15 +228,31 @@ ${cgpaValues}`,
         );
 
         break;
+      case "new_cgpa":
+        user.step = "num_semesters";
+         await histories.create({
+          user_id: messageId,
+          data_use: "new_cgpa",
+        });
+        bot.sendChatAction(messageId, "typing");
+        setTimeout(() => {
+          bot.sendMessage(
+            messageId,
+            "To calculate your CGPA, input how many semesters done",
+          );
+        }, 1200);
+        break;
       case "save":
-        if(!user ||!user.value || !user.type) throw new Error("No Record Found");
-        
-        await dataSaved.create({
+        if (!user || !user.value || !user.type)
+          throw new Error("No Record Found");
+
+        const newUser = await dataSaved.create({
           user_id: messageId,
           data: user.value,
           data_use: user.type,
         });
         user.step = "awaiting_name";
+        user.created_at = newUser.created_at
         bot.sendMessage(
           messageId,
           "Give a name (e.g first semester 2025/2026)",
@@ -220,9 +268,8 @@ ${cgpaValues}`,
 
         break;
     }
-  } catch (err){
-    bot.sendMessage(messageId,err.message)
-    
+  } catch (err) {
+    bot.sendMessage(messageId, err.message);
   }
 });
 bot.on("message", async (msg) => {
@@ -237,87 +284,111 @@ bot.on("message", async (msg) => {
       case "total_credit_unit":
         unit = parseInt(msg.text);
         if (unit < 1) {
-          throw new Error("Total unit can't be less than one");
+          throw new Error("The semester's total unit can't be less than one");
         }
         user.totalCreditUnit = unit;
-        user.step = "user_credit_unit";
+        user.step = "user_total_point";
         bot.sendChatAction(id, "typing");
         setTimeout(() => {
           bot.sendMessage(
             id,
-            "Nice! Now write the semester's total credit unit",
+            "Nice! Now write youur overall points (i.e the number of points or grade you got from your courses)",
           );
         }, 1500);
 
         break;
-      case "user_credit_unit":
-        await calculateUserGPA(unit, user, msg);
+      case "user_total_point":
+        await calculateUserGPA2(id, unit, user, msg);
 
         break;
       case "num_semesters":
-        user.totalSemesters = parseInt(msg.text);
+        user.total = parseInt(msg.text);
 
-        if (user.totalSemesters < 1) {
-          throw new Error("Must be at least 1 semester");
+        if (user.total < 1) {
+          throw new Error("Must be at least 1 " + user.totalLabel);
         }
 
-        user.step = "semester_input";
+        user.step = user.totalLabel + "_input";
 
         bot.sendChatAction(id, "typing");
-        setTimeout(() => {
-          bot.sendMessage(id, `Semester 1: Enter GPA and Units (e.g. 4.5 18)`);
-        }, 1500);
+        if (user.totalLabel === "semester") {
+          setTimeout(() => {
+            bot.sendMessage(
+              id,
+              `Semester 1: Enter GPA and Units (e.g. 4.5 18)`,
+            );
+          }, 1300);
+        } else {
+          setTimeout(() => {
+            bot.sendMessage(
+              id,
+              `Course 1: Enter Points and Units (e.g. 10 2)i.e  10 points for 2 credit unit course`,
+            );
+          }, 1300);
+        }
 
         break;
       case "plan_gpa":
-        user.totalCourses = parseInt(msg.text);
+        user.total = parseInt(msg.text);
 
-        if (user.totalCourses < 1) {
+        if (user.total < 1) {
           throw new Error("Must be at least 1 course");
         }
 
-        user.step = "course_input";
+        user.step = "plan_gpa_course_input";
         bot.sendChatAction(id, "typing");
         setTimeout(() => {
           bot.sendMessage(
             id,
-            `Semester 1: Enter Course Name and Units (e.g. math 2)`,
+            `Course 1: Enter Course Name and Credit Units (e.g. math 2)`,
           );
-        }, 1500);
+        }, 1150);
 
         break;
       case "semester_input":
-        await calculateSemesterInput(id, user,msg);
+        await calculateSemesterInput(id, user, msg);
         break;
-
       case "course_input":
-        const [course_name, course_units] = msg.text.split(" ").map(Number);
-
-        if (!course_name || !course_units) {
-          throw new Error("Format:  (e.g. math 2)");
-        }
-
-        user.courses.push({ course_name, course_units });
-
-        if (user.courses.length < user.totalCourses) {
-          user.currentCourse++;
-          bot.sendChatAction(id, "typing");
-
-          setTimeout(() => {
-            bot.sendMessage(
-              id,
-              `Course ${user.currentCourse}: Enter Course Name and Units`,
-            );
-          }, 1500);
-        } else {
-          // user.step = "calculate_cgpa";
-
-          predictGPA(id, user, msg);
-        }
+        await calculateCourseInput(id, user, msg);
         break;
+      case "plan_gpa_course_input":
+        await writeCourseInput(id, user, msg);
+        break;
+      case "calc_plan_gpa":
+        const expected_gpa = parseInt(msg.text)
+        let total_points_needed = expected_gpa * user.totalCreditUnit
+
+        let values = ""
+
+        user.courses.forEach(course => {
+          // assume minimum target = A first
+          let gradePoint = 5
+
+          let course_points = gradePoint * course.units
+          const ex = total_points_needed - (user.userTotalPonts - course_points)
+
+
+          total_points_needed -= ( course_points)
+
+          values += `For ${course.courseName} (${course.units} units), aim for grade point ${ex}\n`
+        })
+
+        values += `Remaining points needed: ${total_points_needed}`
+        await historiesCalc.create({
+          user_id : id,
+          data_use: "plan_gpa",
+          data:expected_gpa
+        })
+                bot.sendChatAction(id, "typing");
+        setTimeout(() => {
+          
+          bot.sendMessage(id,`GPA Plan:\n${values} `)
+        }, 3000);
+        break;
+
       case "awaiting_name":
         await dataSaved.updateOne(
-          { user_id: id },
+          { user_id: id,data_use: user.type,created_at: user.created_at },
           { $set: { data_name: msg.text } },
         );
         delete gpaData[msg.chat.id];
@@ -334,29 +405,151 @@ bot.on("message", async (msg) => {
     bot.sendMessage(id, error.message);
   }
 });
-async function calculateUserGPA(unit, user, msg) {
-  unit = parseInt(msg.text);
-  if (unit < 1) {
+
+async function calculateSemesterInput(id, user, msg) {
+  const [gpa, units] = msg.text.split(" ").map(Number);
+
+  if (!gpa || !units) {
+    throw new Error("Format: GPA Units (e.g. 4.5 18)");
+  }
+
+  user.semesters.push({ gpa, units });
+
+  if (user.semesters.length < user.total) {
+    user.currentSemester++;
+    bot.sendChatAction(id, "typing");
+
+    setTimeout(() => {
+      bot.sendMessage(
+        id,
+        `Semester ${user.currentSemester + 1}: Enter GPA and  Unit`,
+      );
+    }, 1200);
+  } else {
+    await calculateCGPA(id, user);
+  }
+}
+async function writeCourseInput(id, user, msg) {
+  let [courseName, units] = msg.text.split(" ");
+
+  if (!courseName || !units) {
+    throw new Error("Format: Course Name Units (e.g. 4.5 18)");
+  }
+  units = Number(units)
+
+  user.courses.push({ courseName, units });
+
+  if (user.courses.length < user.total) {
+    user.current++;
+    bot.sendChatAction(id, "typing");
+
+    setTimeout(() => {
+      bot.sendMessage(id, `Course ${user.current + 1}: Enter Course Name and  Unit`);
+    }, 1200);
+  } else {
+    user.totalCreditUnit = user.courses
+    .map((course) => course.units)
+    .reduce((prev, current) => prev + current, 0);
+    user.userTotalPoints = user.courses
+    .map((course) => course.units)
+    .reduce((prev, current) => prev + (current*5), 0);
+    bot.sendChatAction(id, "typing");
+  
+    setTimeout(() => {
+      bot.sendMessage(id, `Nice, now enter your planned/desire gpa`);
+    }, 2000);
+    user.step = "calc_plan_gpa"
+  }
+}
+async function calculateCourseInput(id, user, msg) {
+  const [points, units] = msg.text.split(" ").map(Number);
+
+  if (!points || !units) {
+    throw new Error("Format: Points Units (e.g. 4.5 18)");
+  }
+
+  user.courses.push({ points, units });
+
+  if (user.courses.length < user.total) {
+    user.current++;
+    bot.sendChatAction(id, "typing");
+
+    setTimeout(() => {
+      bot.sendMessage(id, `Course ${user.current + 1}: Enter Point and Unit`);
+    }, 1200);
+  } else {
+    // Sum total units
+    user.totalCreditUnit = user.courses.reduce(
+      (sum, course) => sum + course.units,
+      0,
+    );
+
+    // Sum total points
+    user.userTotalPoints = user.courses.reduce(
+      (sum, course) => sum + course.points,
+      0,
+    );
+
+    calculateUserGPA(id, user);
+  }
+}
+
+async function calculateUserGPA(id, user) {
+  if (user.totalCreditUnit < 1) {
     throw new Error("Total unit can't be less than one");
   }
-  if (unit >= user.totalCreditUnit - 1) {
-    throw new Error("Total unit can't be equal or more than the semester gpa");
-  }
-  user.userCreditUnit = unit;
-  const calcValue = Number(user.totalCreditUnit / user.userCreditUnit).toFixed(
-    2,
-  );
+
+  // ✅ Correct GPA formula
+  const calcValue = (user.userTotalPoints / user.totalCreditUnit).toFixed(2);
+
   user.value = calcValue;
+
   await historiesCalc.create({
-    user_id: msg.chat.id,
+    user_id: id,
     calc: calcValue,
     data_use: user.type,
   });
 
-  bot.sendChatAction(msg.chat.id, "typing");
+  bot.sendChatAction(id, "typing");
+
   setTimeout(() => {
     bot.sendMessage(
-      msg.chat.id,
+      id,
+      `🎉 Beautiful! Your GPA is ${calcValue}.
+Do you wish to save this semester?`,
+      {
+        parse_mode: "Markdown",
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: "Yes", callback_data: "save" }],
+            [{ text: "No", callback_data: "cancel" }],
+          ],
+        },
+      },
+    );
+  }, 1500);
+}
+async function calculateUserGPA2(id, unit, user, msg) {
+  unit =  parseInt(msg.text) ;
+  if (unit < 1) {
+    throw new Error("Total point can't be less than one");
+  }
+ 
+  user.userTotalPoints = unit;
+  const calcValue = Number(user.userTotalPoints/user.totalCreditUnit ).toFixed(
+    2,
+  );
+  user.value = calcValue;
+  await historiesCalc.create({
+    user_id: id,
+    calc: calcValue,
+    data_use: user.type,
+  });
+
+  bot.sendChatAction(id, "typing");
+  setTimeout(() => {
+    bot.sendMessage(
+      id,
       `🎉Beautiful! Your GPA is ${calcValue}.
               Do you wish to save this semester?
               `,
@@ -372,30 +565,7 @@ async function calculateUserGPA(unit, user, msg) {
     );
   }, 1500);
 }
-async function calculateSemesterInput(id, user,msg ) {
-  const [gpa, units] = msg.text.split(" ").map(Number);
-
-  if (!gpa || !units) {
-    throw new Error("Format: GPA Units (e.g. 4.5 18)");
-  }
-
-  user.semesters.push({ gpa, units });
-
-  if (user.semesters.length < user.totalSemesters) {
-    user.currentSemester++;
-    bot.sendChatAction(id, "typing");
-
-    setTimeout(() => {
-      bot.sendMessage(
-        id,
-        `Semester ${user.currentSemester+1}: Enter GPA and  Unit`,
-      );
-    }, 1200);
-  } else {
-    await calculateCGPA(id, user, );
-  }
-}
-async function calculateCGPA(id, user, ) {
+async function calculateCGPA(id, user) {
   let totalPoints = 0;
   let totalUnits = 0;
 
