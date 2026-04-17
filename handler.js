@@ -1,4 +1,3 @@
-import TelegramBot from "node-telegram-bot-api";
 import { callDb } from "./callDb.js";
 import { dataSaved, histories, historiesCalc } from "./schema.js";
 import bot from "./bot.js";

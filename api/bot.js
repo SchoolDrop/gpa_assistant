@@ -1,5 +1,5 @@
-import bot from "../bot";
-import "../handler";
+import bot from "../bot.js";
+import "../handler.js";
 
 export default async function handler(req, res) {
   if (req.method === "POST") {
