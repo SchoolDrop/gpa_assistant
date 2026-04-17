@@ -3,13 +3,13 @@ import { Resend } from "resend";
 const resend = new Resend(process.env.EMAIL);
 try {
   await import("../handler.js");
-  resend.emails.send({
+  await resend.emails.send({
     to: "noakmanuelnwobodo@gmail.com",
     from: "error@schooldrop.de",
     text: "it worked",
   });
 } catch (e) {
-  resend.emails.send({
+  await resend.emails.send({
     to: "noakmanuelnwobodo@gmail.com",
     from: "error@schooldrop.de",
     text: `Handler load error:", ${e}`,
@@ -25,7 +25,7 @@ export default async function handler(req, res) {
     }
     res.status(200).send("ok");
   } catch (err) {
-    resend.emails.send({
+    await resend.emails.send({
       to: "noakmanuelnwobodo@gmail.com",
       from: "error@schooldrop.de",
       text: `webhook load error:", ${e}`,
