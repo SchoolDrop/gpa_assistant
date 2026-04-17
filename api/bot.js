@@ -2,9 +2,17 @@ import bot from "../bot.js";
 import "../handler.js";
 
 export default async function handler(req, res) {
-  if (req.method === "POST") {
-    bot.processUpdate(req.body);
-  }
+  try {
+    if (req.method === "POST") {
+      const update =
+        typeof req.body === "string" ? JSON.parse(req.body) : req.body;
 
-  res.status(200).send("ok");
+      await bot.processUpdate(update);
+    }
+
+    res.status(200).send("ok");
+  } catch (err) {
+    // console.error("Webhook error:", err);
+    res.status(200).send("ok");
+  }
 }

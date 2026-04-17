@@ -122,19 +122,15 @@ bot.on("callback_query", async (query) => {
           data_use: "plan_gpa",
         });
         bot.sendChatAction(messageId, "typing");
-        setTimeout(() => {
-          bot.sendMessage(
-            messageId,
-            "Things to note. It calculate base on this format.For a 1 credit unit course, the highest point is 5, for a 2 credit unit course the highest point is 10. For a 3 credit unit course, the highest point is 15 and so on",
-          );
-        }, 1000);
+        bot.sendMessage(
+          messageId,
+          "Things to note. It calculate base on this format.For a 1 credit unit course, the highest point is 5, for a 2 credit unit course the highest point is 10. For a 3 credit unit course, the highest point is 15 and so on",
+        );
         bot.sendChatAction(messageId, "typing");
-        setTimeout(() => {
-          bot.sendMessage(
-            messageId,
-            "To plan your GPA, input the number of courses offering",
-          );
-        }, 2000);
+        bot.sendMessage(
+          messageId,
+          "To plan your GPA, input the number of courses offering",
+        );
 
         break;
       case "method1_calc_gpa":
@@ -149,9 +145,7 @@ bot.on("callback_query", async (query) => {
           data_use: "method1_calc_gpa",
         });
         bot.sendChatAction(messageId, "typing");
-        setTimeout(() => {
-          bot.sendMessage(messageId, "Write down total unit for the semester");
-        }, 1000);
+        bot.sendMessage(messageId, "Write down total unit for the semester");
         break;
       case "method2_calc_gpa":
         user.step = "num_semesters";
@@ -161,12 +155,10 @@ bot.on("callback_query", async (query) => {
           data_use: "method2_calc_gpa",
         });
         bot.sendChatAction(messageId, "typing");
-        setTimeout(() => {
-          bot.sendMessage(
-            messageId,
-            "To calculate your GPA, input the number of courses",
-          );
-        }, 1200);
+        bot.sendMessage(
+          messageId,
+          "To calculate your GPA, input the number of courses",
+        );
         break;
       case "view_calc_gpa":
         const res = await dataSaved.find(
@@ -227,12 +219,10 @@ ${cgpaValues}`,
           data_use: "new_cgpa",
         });
         bot.sendChatAction(messageId, "typing");
-        setTimeout(() => {
-          bot.sendMessage(
-            messageId,
-            "To calculate your CGPA, input how many semesters done",
-          );
-        }, 1200);
+        bot.sendMessage(
+          messageId,
+          "To calculate your CGPA, input how many semesters done",
+        );
         break;
       case "save":
         if (!user || !user.value || !user.type)
@@ -281,12 +271,10 @@ bot.on("message", async (msg) => {
         user.totalCreditUnit = unit;
         user.step = "user_total_point";
         bot.sendChatAction(id, "typing");
-        setTimeout(() => {
-          bot.sendMessage(
-            id,
-            "Nice! Now write youur overall points (i.e the number of points or grade you got from your courses)",
-          );
-        }, 1500);
+        bot.sendMessage(
+          id,
+          "Nice! Now write youur overall points (i.e the number of points or grade you got from your courses)",
+        );
 
         break;
       case "user_total_point":
@@ -304,19 +292,12 @@ bot.on("message", async (msg) => {
 
         bot.sendChatAction(id, "typing");
         if (user.totalLabel === "semester") {
-          setTimeout(() => {
-            bot.sendMessage(
-              id,
-              `Semester 1: Enter GPA and Units (e.g. 4.5 18)`,
-            );
-          }, 1300);
+          bot.sendMessage(id, `Semester 1: Enter GPA and Units (e.g. 4.5 18)`);
         } else {
-          setTimeout(() => {
-            bot.sendMessage(
-              id,
-              `Course 1: Enter Points and Units (e.g. 10 2)i.e  10 points for 2 credit unit course`,
-            );
-          }, 1300);
+          bot.sendMessage(
+            id,
+            `Course 1: Enter Points and Units (e.g. 10 2)i.e  10 points for 2 credit unit course`,
+          );
         }
 
         break;
@@ -329,12 +310,10 @@ bot.on("message", async (msg) => {
 
         user.step = "plan_gpa_course_input";
         bot.sendChatAction(id, "typing");
-        setTimeout(() => {
-          bot.sendMessage(
-            id,
-            `Course 1: Enter Course Name and Credit Units (e.g. math 2)`,
-          );
-        }, 1150);
+        bot.sendMessage(
+          id,
+          `Course 1: Enter Course Name and Credit Units (e.g. math 2)`,
+        );
 
         break;
       case "semester_input":
@@ -375,9 +354,7 @@ bot.on("message", async (msg) => {
         });
 
         bot.sendChatAction(id, "typing");
-        setTimeout(() => {
-          bot.sendMessage(id, `GPA Plan:\n${values}`);
-        }, 3000);
+        bot.sendMessage(id, `GPA Plan:\n${values}`);
         break;
       case "awaiting_name":
         await dataSaved.updateOne(
@@ -387,9 +364,7 @@ bot.on("message", async (msg) => {
         delete gpaData[msg.chat.id];
         bot.sendChatAction(id, "typing");
 
-        setTimeout(() => {
-          bot.sendMessage(id, `Alright, to continue type /start`);
-        }, 1500);
+        bot.sendMessage(id, `Alright, to continue type /start`);
 
       default:
         break;
