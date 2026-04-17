@@ -1,6 +1,11 @@
 import bot from "../bot.js";
-import "../handler.js";
 
+try {
+  await import("../handler.js");
+  handlerLoaded = true;
+} catch (e) {
+  console.error("Handler load error:", e);
+}
 export default async function handler(req, res) {
   try {
     if (req.method === "POST") {
@@ -12,7 +17,6 @@ export default async function handler(req, res) {
 
     res.status(200).send("ok");
   } catch (err) {
-    console.error("Webhook error:", err);
     res.status(200).send("ok");
   }
 }
