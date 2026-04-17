@@ -12,7 +12,12 @@ export default async function handler(req, res) {
 
     res.status(200).send("ok");
   } catch (err) {
-    // console.error("Webhook error:", err);
+    console.error("Webhook error:", err);
     res.status(200).send("ok");
   }
 }
+export const config = {
+  api: {
+    bodyParser: true, // keep true, but make sure it's not double-parsing
+  },
+};
