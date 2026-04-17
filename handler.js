@@ -1,15 +1,11 @@
 import TelegramBot from "node-telegram-bot-api";
 import { callDb } from "./callDb.js";
 import { dataSaved, histories, historiesCalc } from "./schema.js";
-import dotenv from "dotenv";
+import bot from "./bot.js";
 
-dotenv.config({
-  path: ".env",
-});
-
-const bot = new TelegramBot(process.env.TEL_KEY, {
-  polling: true,
-});
+// const bot = new TelegramBot(process.env.TEL_KEY, {
+//   polling: true,
+// });
 const gpaData = {};
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
