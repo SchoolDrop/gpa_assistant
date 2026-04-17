@@ -43,12 +43,13 @@ bot.on("callback_query", async (query) => {
   const data = query.data;
   const messageId = query.message.chat.id;
   let user = gpaData[messageId];
+  
 
   try {
     await callDb();
     switch (data) {
       case "gpa":
-        user = {
+        gpaData[messageId] = {
           step: "gpa_clicked",
           totalCreditUnit: 0,
           userCreditUnit: 0,
@@ -56,6 +57,7 @@ bot.on("callback_query", async (query) => {
           type: "gpa",
           user: "",
         };
+        
 
         
           bot.sendMessage(
@@ -77,7 +79,7 @@ bot.on("callback_query", async (query) => {
 
         break;
       case "cgpa":
-        user = {
+        gpaData[messageId] = {
           step: "num_semesters",
           totalSemesters: 0,
           currentSemester: 0,
@@ -88,7 +90,7 @@ bot.on("callback_query", async (query) => {
         };
         await histories.create({
           user_id: messageId,
-          data_use: user.type,
+          data_use: gpaData[messageId].type,
         });
         bot.sendChatAction(messageId, "typing");
         setTimeout(() => {
@@ -100,7 +102,7 @@ bot.on("callback_query", async (query) => {
 
         break;
       case "plan_gpa":
-        user = {
+        gpaData[messageId] = {
           step: "plan_gpa",
           totalCourses: 0,
           currentCourse: 0,
@@ -146,6 +148,7 @@ bot.on("callback_query", async (query) => {
         const res = await dataSaved.find(
           {
             user_id: messageId,
+            data_use:"gpa"
           },
           { data_name: 1, data: 1, _id: 0 },
         );
@@ -167,7 +170,35 @@ ${values}`,
         );
 
         break;
+      case "view_calc_cgpa":
+        const cgpaRes = await dataSaved.find(
+          {
+            user_id: messageId,
+            data_use:"cgpa"
+          },
+          { data_name: 1, data: 1, _id: 0 },
+        );
+        if (cgpaRes.length === 0) {
+          bot.sendMessage(messageId, "No record found");
+          break;
+        }
+        let cgpaValues = "";
+        cgpaRes.forEach((value, index) => {
+          cgpaValues += `${index + 1}: ${value.data_name}-${value.data}\n`;
+        });
+        bot.sendMessage(
+          messageId,
+          `📊 CGPA History
+
+You have ${cgpaRes.length} ${cgpaRes.length === 1 ? "record" : "records"}:
+
+${cgpaValues}`,
+        );
+
+        break;
       case "save":
+        if(!user ||!user.value || !user.type) throw new Error("No Record Found");
+        
         await dataSaved.create({
           user_id: messageId,
           data: user.value,
@@ -189,11 +220,13 @@ ${values}`,
 
         break;
     }
-  } catch {}
+  } catch (err){
+    bot.sendMessage(messageId,err.message)
+    
+  }
 });
 bot.on("message", async (msg) => {
   const id = msg.chat.id;
-  console.log(gpaData[id]);
 
   if (!gpaData[id]) return;
   try {
@@ -229,7 +262,6 @@ bot.on("message", async (msg) => {
         }
 
         user.step = "semester_input";
-        console.log("yes");
 
         bot.sendChatAction(id, "typing");
         setTimeout(() => {
@@ -255,7 +287,7 @@ bot.on("message", async (msg) => {
 
         break;
       case "semester_input":
-        await calculateSemesterInput();
+        await calculateSemesterInput(id, user,msg);
         break;
 
       case "course_input":
@@ -340,7 +372,7 @@ async function calculateUserGPA(unit, user, msg) {
     );
   }, 1500);
 }
-async function calculateSemesterInput(id, user, msg) {
+async function calculateSemesterInput(id, user,msg ) {
   const [gpa, units] = msg.text.split(" ").map(Number);
 
   if (!gpa || !units) {
@@ -356,14 +388,14 @@ async function calculateSemesterInput(id, user, msg) {
     setTimeout(() => {
       bot.sendMessage(
         id,
-        `Semester ${user.currentSemester}: Enter GPA and  Unit`,
+        `Semester ${user.currentSemester+1}: Enter GPA and  Unit`,
       );
     }, 1200);
   } else {
-    await calculateCGPA(id, user, msg);
+    await calculateCGPA(id, user, );
   }
 }
-async function calculateCGPA(id, user, msg) {
+async function calculateCGPA(id, user, ) {
   let totalPoints = 0;
   let totalUnits = 0;
 
@@ -375,7 +407,7 @@ async function calculateCGPA(id, user, msg) {
   const cgpa = totalUnits === 0 ? 0 : totalPoints / totalUnits;
   user.value = cgpa;
   await historiesCalc.create({
-    user_id: msg.from.username || msg.contact.user_id || msg.chat.id,
+    user_id: id,
     calc: cgpa,
     data_use: user.type,
   });
