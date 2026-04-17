@@ -59,7 +59,7 @@ bot.on("callback_query", async (query) => {
           totalLabel: "course",
           current: 0,
           courses: [],
-          created_at: new Date()
+          created_at: new Date(),
         };
 
         bot.sendMessage(messageId, "🎓 *GPA Calculator*\n\nSelect an option:", {
@@ -86,7 +86,7 @@ bot.on("callback_query", async (query) => {
           value: 0,
           type: "cgpa",
           user: "",
-          created_at:new Date()
+          created_at: new Date(),
         };
 
         bot.sendMessage(
@@ -120,7 +120,7 @@ bot.on("callback_query", async (query) => {
           value: 0,
           type: "plan_gpa",
           user: "",
-          created_at:new Date()
+          created_at: new Date(),
         };
         await histories.create({
           user_id: messageId,
@@ -155,10 +155,7 @@ bot.on("callback_query", async (query) => {
         });
         bot.sendChatAction(messageId, "typing");
         setTimeout(() => {
-          bot.sendMessage(
-            messageId,
-            "Write down total unit for the semester",
-          );
+          bot.sendMessage(messageId, "Write down total unit for the semester");
         }, 1000);
         break;
       case "method2_calc_gpa":
@@ -230,7 +227,7 @@ ${cgpaValues}`,
         break;
       case "new_cgpa":
         user.step = "num_semesters";
-         await histories.create({
+        await histories.create({
           user_id: messageId,
           data_use: "new_cgpa",
         });
@@ -252,7 +249,7 @@ ${cgpaValues}`,
           data_use: user.type,
         });
         user.step = "awaiting_name";
-        user.created_at = newUser.created_at
+        user.created_at = newUser.created_at;
         bot.sendMessage(
           messageId,
           "Give a name (e.g first semester 2025/2026)",
@@ -355,40 +352,41 @@ bot.on("message", async (msg) => {
         await writeCourseInput(id, user, msg);
         break;
       case "calc_plan_gpa":
-        const expected_gpa = parseInt(msg.text)
-        let total_points_needed = expected_gpa * user.totalCreditUnit
+        const expected_gpa = parseFloat(msg.text); // use parseFloat — GPA is decimal
+        const total_points_needed = expected_gpa * user.totalCreditUnit;
 
-        let values = ""
+        let values = "";
 
-        user.courses.forEach(course => {
-          // assume minimum target = A first
-          let gradePoint = 5
+        user.courses.forEach((course) => {
+          // Each course's proportional share of total points needed
+          const courseShare =
+            (course.units / user.totalCreditUnit) * total_points_needed;
 
-          let course_points = gradePoint * course.units
-          const ex = total_points_needed - (user.userTotalPonts - course_points)
+          // Required grade point for this course = share ÷ its own units
+          const requiredGradePoint = courseShare / course.units;
+          // Simplifies to: requiredGradePoint = expected_gpa (same for all courses)
+          // But this approach scales correctly if you weight courses differently later
 
+          const rounded = Math.round(requiredGradePoint * 10) / 10;
+          values += `For ${course.courseName} (${course.units} units), aim for grade point: ${rounded}\n`;
+        });
 
-          total_points_needed -= ( course_points)
+        values += `\nTarget GPA: ${expected_gpa}`;
 
-          values += `For ${course.courseName} (${course.units} units), aim for grade point ${ex}\n`
-        })
-
-        values += `Remaining points needed: ${total_points_needed}`
         await historiesCalc.create({
-          user_id : id,
+          user_id: id,
           data_use: "plan_gpa",
-          data:expected_gpa
-        })
-                bot.sendChatAction(id, "typing");
+          data: expected_gpa,
+        });
+
+        bot.sendChatAction(id, "typing");
         setTimeout(() => {
-          
-          bot.sendMessage(id,`GPA Plan:\n${values} `)
+          bot.sendMessage(id, `GPA Plan:\n${values}`);
         }, 3000);
         break;
-
       case "awaiting_name":
         await dataSaved.updateOne(
-          { user_id: id,data_use: user.type,created_at: user.created_at },
+          { user_id: id, data_use: user.type, created_at: user.created_at },
           { $set: { data_name: msg.text } },
         );
         delete gpaData[msg.chat.id];
@@ -435,7 +433,7 @@ async function writeCourseInput(id, user, msg) {
   if (!courseName || !units) {
     throw new Error("Format: Course Name Units (e.g. 4.5 18)");
   }
-  units = Number(units)
+  units = Number(units);
 
   user.courses.push({ courseName, units });
 
@@ -444,21 +442,24 @@ async function writeCourseInput(id, user, msg) {
     bot.sendChatAction(id, "typing");
 
     setTimeout(() => {
-      bot.sendMessage(id, `Course ${user.current + 1}: Enter Course Name and  Unit`);
+      bot.sendMessage(
+        id,
+        `Course ${user.current + 1}: Enter Course Name and  Unit`,
+      );
     }, 1200);
   } else {
     user.totalCreditUnit = user.courses
-    .map((course) => course.units)
-    .reduce((prev, current) => prev + current, 0);
+      .map((course) => course.units)
+      .reduce((prev, current) => prev + current, 0);
     user.userTotalPoints = user.courses
-    .map((course) => course.units)
-    .reduce((prev, current) => prev + (current*5), 0);
+      .map((course) => course.units)
+      .reduce((prev, current) => prev + current * 5, 0);
     bot.sendChatAction(id, "typing");
-  
+
     setTimeout(() => {
       bot.sendMessage(id, `Nice, now enter your planned/desire gpa`);
     }, 2000);
-    user.step = "calc_plan_gpa"
+    user.step = "calc_plan_gpa";
   }
 }
 async function calculateCourseInput(id, user, msg) {
@@ -530,13 +531,13 @@ Do you wish to save this semester?`,
   }, 1500);
 }
 async function calculateUserGPA2(id, unit, user, msg) {
-  unit =  parseInt(msg.text) ;
+  unit = parseInt(msg.text);
   if (unit < 1) {
     throw new Error("Total point can't be less than one");
   }
- 
+
   user.userTotalPoints = unit;
-  const calcValue = Number(user.userTotalPoints/user.totalCreditUnit ).toFixed(
+  const calcValue = Number(user.userTotalPoints / user.totalCreditUnit).toFixed(
     2,
   );
   user.value = calcValue;
