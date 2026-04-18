@@ -1,5 +1,5 @@
-import bot from "./bot";
-import { callDb } from "./callDb";
+import bot from "./bot.js";
+import { callDb } from "./callDb.js";
 
 export function initBot() {
   if (initialized) return;
