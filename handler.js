@@ -9,9 +9,9 @@ dotenv.config();
 
 const app = express();
 
-initBot();
 app.post("/bot", (req, res) => {
   bot.processUpdate(req.body);
+  initBot();
   res.status(200);
 });
 
