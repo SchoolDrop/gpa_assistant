@@ -1,7 +1,7 @@
 import bot from "../bot.js";
-try {
-  await import("../handler.js");
-} catch (e) {}
+import { initBot } from "../../handler.js";
+
+initBot();
 export default async function handler(req, res) {
   try {
     if (req.method === "POST") {
