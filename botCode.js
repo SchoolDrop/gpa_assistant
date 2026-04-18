@@ -1,5 +1,6 @@
 import bot from "./bot.js";
 import { callDb } from "./callDb.js";
+import { dataSaved, histories, historiesCalc } from "./schema.js";
 
 let initialized = false;
 
