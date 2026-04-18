@@ -1,9 +1,9 @@
 import bot from "../bot.js";
 import { initBot } from "../../handler.js";
 
-initBot();
 export default async function handler(req, res) {
   try {
+    initBot();
     if (req.method === "POST") {
       bot.processUpdate(req.body);
     }
