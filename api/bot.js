@@ -5,15 +5,13 @@ initBot();
 export default async function handler(req, res) {
   try {
     if (req.method === "POST") {
-      const update =
-        typeof req.body === "string" ? JSON.parse(req.body) : req.body;
-
-      await bot.processUpdate(update);
+      bot.processUpdate(req.body);
     }
-    res.status(200).send("ok");
+
+    res.status(200).end();
   } catch (err) {
-    console.error("Webhook error:", err); // this will show in Vercel logs
-    res.status(200).json({ error: err.message, stack: err.stack }); // temporary - remove after fixing
+    console.error("ERROR:", err);
+    res.status(500).end();
   }
 }
 export const config = {
