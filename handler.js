@@ -1,13 +1,13 @@
 import { callDb } from "./callDb.js";
 import { dataSaved, histories, historiesCalc } from "./schema.js";
 import bot from "./bot.js";
+import express from "express";
 
-// const bot = new TelegramBot(process.env.TEL_KEY, {
-//   polling: true,
-// });
+const app = express();
+
 let initialized = false;
 
-export function initBot() {
+function initBot() {
   if (initialized) return;
   initialized = true;
   const gpaData = {};
@@ -354,7 +354,7 @@ ${cgpaValues}`,
             // But this approach scales correctly if you weight courses differently later
 
             const rounded = Math.round(requiredGradePoint * 10) / 10;
-            values += `For ${course.courseName} (${course.units} units), aim for grade point: ${rounded}\n`;
+            values += `For ${course.courseName} (${course.units} units), aim for grade point: ${rounded * course.units}\n`;
           });
 
           values += `\nTarget GPA: ${expected_gpa}`;
@@ -605,3 +605,6 @@ Do you wish to save this semester?`,
     );
   }
 }
+
+initBot();
+app.listen(process.env.PORT || "8080", () => {});
