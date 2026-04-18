@@ -1,6 +1,8 @@
 import bot from "./bot.js";
 import { callDb } from "./callDb.js";
 
+let initialized = false;
+
 export function initBot() {
   if (initialized) return;
   initialized = true;
