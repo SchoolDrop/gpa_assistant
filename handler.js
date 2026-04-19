@@ -10,21 +10,21 @@ dotenv.config();
 const app = express();
 
 initBot();
-let isPolling = false;
+// let isPolling = false;
 
-const startBot = () => {
-  if (isPolling) return;
+// const startBot = () => {
+//   if (isPolling) return;
 
-  bot.startPolling();
-  isPolling = true;
+//   bot.startPolling();
+//   isPolling = true;
 
-  console.log("✅ Polling safely started");
-};
+//   console.log("✅ Polling safely started");
+// };
 
 app.get("/", (req, res) => {
   res.status(200).send("yes");
 });
 
 app.listen(process.env.PORT || "8080", () => {
-  startBot();
+  // startBot();
 });

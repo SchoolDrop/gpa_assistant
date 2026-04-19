@@ -69,6 +69,7 @@ What do you want to do?
                   [
                     { text: "⚡ Short", callback_data: "method1_calc_gpa" },
                     { text: "📘 Long", callback_data: "method2_calc_gpa" },
+                    { text: "⚡ In Depth", callback_data: "method3_calc_gpa" },
                   ],
                   [{ text: "📊 Records", callback_data: "view_calc_gpa" }],
                 ],
@@ -131,7 +132,7 @@ What do you want to do?
           setTimeout(() => {
             bot.sendMessage(
               messageId,
-              "Things to note. It calculate base on this format.For a 1 credit unit course, the highest point is 5, for a 2 credit unit course the highest point is 10. For a 3 credit unit course, the highest point is 15 and so on",
+              "Things to note. It calculate base on this format.For a 1 credit unit course, the highest point is 5, for a 2 credit unit course the highest point is 10. For a 3 credit unit course, the highest point is 15 and so on. ",
             );
           }, 1200);
           bot.sendChatAction(messageId, "typing");
@@ -174,6 +175,28 @@ What do you want to do?
             bot.sendMessage(
               messageId,
               "To calculate your GPA, input the number of courses",
+            );
+          }, 1200);
+          break;
+        case "method3_calc_gpa":
+          user.step = "user_method3";
+
+          await histories.create({
+            user_id: messageId,
+            data_use: "method3_calc_gpa",
+          });
+          bot.sendChatAction(messageId, "typing");
+          setTimeout(() => {
+            bot.sendMessage(
+              messageId,
+              "Type your courses in this format\n maths 2 10, social-studies 3 15, english 1 5\n i.e it goes (course name, unit(e.g 1) , point(e.g 5)\nFor any coure name with a space, include - between, i.e social studies -> social-studies",
+            );
+            bot.sendChatAction(messageId, "typing");
+          }, 500);
+          setTimeout(() => {
+            bot.sendMessage(
+              messageId,
+              "To calculate your GPA, input the courses in their names, units and points e.g social-studies 2 10, maths 3 15",
             );
           }, 1200);
           break;
@@ -293,7 +316,7 @@ ${cgpaValues}`,
           setTimeout(() => {
             bot.sendMessage(
               id,
-              "Nice! Now write youur overall points (i.e the number of points or grade you got from your courses)",
+              "Nice! Now write your overall points i.e the number of points or grade you got from your courses. For example, in a semester, the total gp point you got was 70",
             );
           }, 1200);
 
@@ -337,6 +360,13 @@ ${cgpaValues}`,
 
           user.step = "plan_gpa_course_input";
           bot.sendChatAction(id, "typing");
+          setTimeout(() => {
+            bot.sendMessage(
+              id,
+              `Type your detail in this format\n math 2 or social-studies 3\n The course name comes first, then the course unit. it should be sent one after the other\n Any course name with space should be added a - inbetween e.g social studies -> social-studies`,
+            );
+            bot.sendChatAction(id, "typing");
+          }, 500);
           setTimeout(() => {
             bot.sendMessage(
               id,
@@ -387,6 +417,27 @@ ${cgpaValues}`,
             bot.sendMessage(id, `GPA Plan:\n${values}`);
           }, 1200);
           break;
+        case "use_method3":
+          msg.text.split(",").map(([course_name, unit, point]) => {
+            if (!course_name || !unit || !point)
+              throw new Error(
+                "Invalid format, please check the description above",
+              );
+            if (
+              !parseInt(unit) ||
+              parseInt(unit) < 1 ||
+              !parseFloat(point) ||
+              parseFloat(point) < 1
+            )
+              throw new Error(
+                "Invalid format, please check the description above",
+              );
+
+            user.totalCreditUnit += parseInt(unit);
+            user.userTotalPoints += parseInt(point);
+          });
+          await calculateUserGPA(id, user);
+          break;
         case "awaiting_name":
           await dataSaved.updateOne(
             { user_id: id, data_use: user.type, created_at: user.created_at },
@@ -397,6 +448,7 @@ ${cgpaValues}`,
           setTimeout(() => {
             bot.sendMessage(id, `Alright, to continue type /start`);
           }, 1200);
+          break;
         default:
           break;
       }
@@ -432,9 +484,11 @@ ${cgpaValues}`,
     let [courseName, units] = msg.text.split(" ");
 
     if (!courseName || !units) {
-      throw new Error("Format: Course Name Units (e.g. 4.5 18)");
+      throw new Error("Format: Course Name Units (e.g. math 2)");
     }
-    units = Number(units);
+    units = parseInt(units);
+    if (!units || units < 1)
+      throw new Error("Format: Course Name Units (e.g. math 2)");
 
     user.courses.push({ courseName, units });
 
@@ -506,7 +560,6 @@ ${cgpaValues}`,
       throw new Error("Total unit can't be less than one");
     }
 
-    // ✅ Correct GPA formula
     const calcValue = (user.userTotalPoints / user.totalCreditUnit).toFixed(2);
 
     user.value = calcValue;
@@ -522,8 +575,7 @@ ${cgpaValues}`,
     setTimeout(() => {
       bot.sendMessage(
         id,
-        `🎉 Beautiful! Your GPA is ${calcValue}.
-Do you wish to save this semester?`,
+        `🎉 Beautiful! Your GPA is ${calcValue}.\nDo you wish to save this semester?`,
         {
           parse_mode: "Markdown",
           reply_markup: {
@@ -558,10 +610,7 @@ Do you wish to save this semester?`,
     setTimeout(() => {
       bot.sendMessage(
         id,
-        `🎉Beautiful! Your GPA is ${calcValue}.
-        },1200)
-              Do you wish to save this semester?
-              `,
+        `🎉Beautiful! Your GPA is ${calcValue}.\nDo you wish to save this semester?`,
         {
           parse_mode: "Markdown",
           reply_markup: {
