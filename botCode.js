@@ -179,7 +179,7 @@ What do you want to do?
           }, 1200);
           break;
         case "method3_calc_gpa":
-          user.step = "user_method3";
+          user.step = "use_method3";
 
           await histories.create({
             user_id: messageId,
@@ -198,7 +198,7 @@ What do you want to do?
               messageId,
               "To calculate your GPA, input the courses in their names, units and points e.g social-studies 2 10, maths 3 15",
             );
-          }, 1200);
+          }, 2000);
           break;
         case "view_calc_gpa":
           const res = await dataSaved.find(
@@ -372,7 +372,7 @@ ${cgpaValues}`,
               id,
               `Course 1: Enter Course Name and Credit Units (e.g. math 2)`,
             );
-          }, 1200);
+          }, 2000);
 
           break;
         case "semester_input":
@@ -401,7 +401,7 @@ ${cgpaValues}`,
             // But this approach scales correctly if you weight courses differently later
 
             const rounded = Math.round(requiredGradePoint * 10) / 10;
-            values += `For ${course.courseName} (${course.units} units), aim for grade point: ${rounded * course.units}\n`;
+            values += `For ${course.courseName} (${course.units} units), aim for grade point: ${Math.round(rounded * course.units)}\n`;
           });
 
           values += `\nTarget GPA: ${expected_gpa}`;
