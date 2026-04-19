@@ -299,7 +299,7 @@ ${cgpaValues}`,
   bot.on("message", async (msg) => {
     const id = msg.chat.id;
 
-    if (!gpaData[id]) return;
+    if (!gpaData[id] || !gpaData[id].step) return;
     try {
       await callDb();
       let unit = 0;
