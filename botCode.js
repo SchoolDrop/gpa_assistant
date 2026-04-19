@@ -418,24 +418,33 @@ ${cgpaValues}`,
           }, 1200);
           break;
         case "use_method3":
-          msg.text.split(",").map(([course_name, unit, point]) => {
-            if (!course_name || !unit || !point)
-              throw new Error(
-                "Invalid format, please check the description above",
-              );
-            if (
-              !parseInt(unit) ||
-              parseInt(unit) < 1 ||
-              !parseFloat(point) ||
-              parseFloat(point) < 1
-            )
-              throw new Error(
-                "Invalid format, please check the description above",
-              );
+          msg.text.split(",").map((item) => {
+            const [course_name, unit, point] = item.trim().split(" ");
 
-            user.totalCreditUnit += parseInt(unit);
-            user.userTotalPoints += parseInt(point);
+            if (!course_name || !unit || !point) {
+              throw new Error(
+                "Invalid format, please check the description above",
+              );
+            }
+
+            const parsedUnit = parseInt(unit, 10);
+            const parsedPoint = parseFloat(point);
+
+            if (
+              isNaN(parsedUnit) ||
+              parsedUnit < 1 ||
+              isNaN(parsedPoint) ||
+              parsedPoint < 1
+            ) {
+              throw new Error(
+                "Invalid format, please check the description above",
+              );
+            }
+
+            user.totalCreditUnit += parsedUnit;
+            user.userTotalPoints += parsedPoint;
           });
+
           await calculateUserGPA(id, user);
           break;
         case "awaiting_name":
