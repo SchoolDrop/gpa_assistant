@@ -11,7 +11,7 @@ export function initBot() {
   bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
 
-    if (gpaData[chatId]) delete gpaData[chatId];
+    if (gpaData[chatId]) gpaData[chatId] = null;
 
     bot.sendMessage(
       chatId,
