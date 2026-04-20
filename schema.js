@@ -11,6 +11,7 @@ const historySchema = new Schema({
 const historyCalculationSchema = new Schema({
   user_id: String,
   calc: Number,
+  data: String,
   data_use: String,
   created_at: {
     type: Date,
