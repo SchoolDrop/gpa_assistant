@@ -28,7 +28,7 @@ What do you want to do?
           inline_keyboard: [
             [{ text: "📊 Calculate GPA", callback_data: "gpa" }],
             [{ text: "📈 Calculate CGPA", callback_data: "cgpa" }],
-            [{ text: "🎯 Plan Target GPA", callback_data: "plan_gpa" }],
+            [{ text: "🎯 Plan GPA", callback_data: "plan_gpa" }],
             // [{ text: "🎯 View Past GPA", callback_data: "past" }],
           ],
         },
@@ -69,9 +69,11 @@ What do you want to do?
                   [
                     { text: "⚡ Short", callback_data: "method1_calc_gpa" },
                     { text: "📘 Long", callback_data: "method2_calc_gpa" },
-                    { text: "⚡ In Depth", callback_data: "method3_calc_gpa" },
                   ],
-                  [{ text: "📊 Records", callback_data: "view_calc_gpa" }],
+                  [
+                    { text: "⚡ In Depth", callback_data: "method3_calc_gpa" },
+                    { text: "📊 Records", callback_data: "view_calc_gpa" },
+                  ],
                 ],
               },
             },
@@ -134,14 +136,14 @@ What do you want to do?
               messageId,
               "Things to note. It calculate base on this format.For a 1 credit unit course, the highest point is 5, for a 2 credit unit course the highest point is 10. For a 3 credit unit course, the highest point is 15 and so on. ",
             );
-          }, 1200);
-          bot.sendChatAction(messageId, "typing");
+            bot.sendChatAction(messageId, "typing");
+          }, 600);
           setTimeout(() => {
             bot.sendMessage(
               messageId,
               "To plan your GPA, input the number of courses offering",
             );
-          }, 1200);
+          }, 2000);
 
           break;
         case "method1_calc_gpa":
@@ -340,7 +342,7 @@ ${cgpaValues}`,
             if (user.totalLabel === "semester") {
               bot.sendMessage(
                 id,
-                `Semester 1: Enter GPA and Units (e.g. 4.5 18)`,
+                `Semester 1: Enter GPA and Units (e.g. 4.5 18) GPA(4.5) Units(18)`,
               );
             } else {
               bot.sendMessage(
@@ -401,7 +403,7 @@ ${cgpaValues}`,
             // But this approach scales correctly if you weight courses differently later
 
             const rounded = Math.round(requiredGradePoint * 10) / 10;
-            values += `For ${course.courseName} (${course.units} units), aim for grade point: ${Math.round(rounded * course.units)}\n`;
+            values += `For ${course.courseName} (${course.units} units), aim for grade point: ${Math.round(rounded) * course.units}\n`;
           });
 
           values += `\nTarget GPA: ${expected_gpa}`;
@@ -409,7 +411,8 @@ ${cgpaValues}`,
           await historiesCalc.create({
             user_id: id,
             data_use: "plan_gpa",
-            data: expected_gpa,
+            calc: expected_gpa,
+            data: values,
           });
 
           bot.sendChatAction(id, "typing");
